@@ -60,10 +60,9 @@ def build_binds(bps):
     res = f"--bind {APP_DIR}:/app --bind {ENV_DIR}:/env"
     if bps is None:
         return res
-    else:
-        for bp in bps:
-            res += f" --bind {bp}:/bp/{bp.name}"
-        return res
+    for bp in bps:
+        res += f" --bind {bp}:/bp/{bp.name}"
+    return res
 
 
 def parse_and_clone_buildpack(bp):
