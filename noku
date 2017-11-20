@@ -41,15 +41,16 @@ VERBOSE = False
 
 def run(cmd, **kwargs):
     if VERBOSE: print(bcolors.OKGREEN + f"> {cmd}" + bcolors.ENDC)
-    if kwargs.get('silent') == False:
+    if kwargs.get('silent') == False or VERBOSE:
         err = None
     else:
         err = subprocess.DEVNULL
-    return subprocess.run(cmd, check=True, shell=True, stderr=subprocess.DEVNULL, **kwargs)
+    kwargs.pop('silent', False)
+    return subprocess.run(cmd, check=True, shell=True, stderr=err, **kwargs)
 
 
 def nspawn(args, **kwargs):
-    return run("systemd-nspawn --register=no -q -U -E STACK=heroku-16 -E HOME=/app " + args, **kwargs)
+    return run("systemd-nspawn --register=no --keep-unit -q -U -E STACK=heroku-16 -E HOME=/app " + args, **kwargs)
 
 
 class NoBuildpackFound(Exception):
@@ -152,7 +153,7 @@ def run_proc(args):
             tar xf /app.tar.gz -C /
             touch /app/.profile.d/__placeholder_to_make_bash_happy.sh
             cd /app
-            exec sudo -Eu nobody bash -c "source <(cat .profile.d/*.sh); exec {command}"
+            exec sudo -Eu nobody bash -ec "source <(cat .profile.d/*.sh); {command}"
             '""", silent=False)
 
 
@@ -218,6 +219,7 @@ def main():
 
     res = p.parse_args()
 
+    global VERBOSE
     VERBOSE = res.verbose
 
     res.func(res)
